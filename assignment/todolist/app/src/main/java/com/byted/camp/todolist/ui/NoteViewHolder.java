@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -45,6 +46,16 @@ public class NoteViewHolder extends RecyclerView.ViewHolder {
     }
 
     public void bind(final Note note) {
+
+        //根据优先级改变颜色
+        if (note.getPriority() == 2) {
+            itemView.setBackgroundColor(Color.parseColor("#9fa8da"));
+        } else if (note.getPriority() == 1) {
+            itemView.setBackgroundColor(Color.parseColor("#c5cae9"));
+        } else {
+            itemView.setBackgroundColor(Color.parseColor("#e8eaf6"));
+        }
+
         contentText.setText(note.getContent());
         dateText.setText(SIMPLE_DATE_FORMAT.format(note.getDate()));
 
@@ -55,6 +66,7 @@ public class NoteViewHolder extends RecyclerView.ViewHolder {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 note.setState(isChecked ? State.DONE : State.TODO);
                 operator.updateNote(note);
+
             }
         });
         deleteBtn.setOnClickListener(new View.OnClickListener() {

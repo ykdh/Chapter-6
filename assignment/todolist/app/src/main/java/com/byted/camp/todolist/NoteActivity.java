@@ -1,26 +1,43 @@
 package com.byted.camp.todolist;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.Toast;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import com.byted.camp.todolist.db.TodoContract;
+import com.byted.camp.todolist.db.TodoDbHelper;
 
 public class NoteActivity extends AppCompatActivity {
 
     private EditText editText;
     private Button addBtn;
+    private TodoDbHelper dbHelper;
+    private RadioButton highBtn;
+    private RadioButton normalBtn;
+    private RadioButton lowBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
         setTitle(R.string.take_a_note);
+
+        dbHelper = new TodoDbHelper(this);
 
         editText = findViewById(R.id.edit_text);
         editText.setFocusable(true);
@@ -30,6 +47,10 @@ public class NoteActivity extends AppCompatActivity {
         if (inputManager != null) {
             inputManager.showSoftInput(editText, 0);
         }
+
+        highBtn = findViewById(R.id.highBtn);
+        normalBtn = findViewById(R.id.normalBtn);
+        lowBtn = findViewById(R.id.lowBtn);
 
         addBtn = findViewById(R.id.btn_add);
 
@@ -59,10 +80,45 @@ public class NoteActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        dbHelper.close();
     }
 
     private boolean saveNote2Database(String content) {
         // TODO 插入一条新数据，返回是否插入成功
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        //日期
+        SimpleDateFormat sd = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss", Locale.ENGLISH);
+        Date curDate = new Date(System.currentTimeMillis());
+        String subtitle = sd.format(curDate);
+
+        //内容
+        String title = content;
+
+        //状态
+        int state = 0;
+
+        //优先级
+        int priority;
+        if (highBtn.isChecked()) {
+            priority = 2;
+        } else if (normalBtn.isChecked()) {
+            priority = 1;
+        } else {
+            priority = 0;
+        }
+
+        ContentValues values = new ContentValues();
+        values.put(TodoContract.MyEntry.COLUMN_NAME_TITLE, title);
+        values.put(TodoContract.MyEntry.COLUMN_NAME_SUBTITLE, subtitle);
+        values.put(TodoContract.MyEntry.COLUMN_NAME_STATE, state);
+        values.put(TodoContract.MyEntry.COLUMN_NAME_PRIORITY, priority);
+
+        long newRowId = db.insert(TodoContract.MyEntry.TABLE_NAME, null, values);
+
+        if (newRowId != -1) {
+            return true;
+        }
         return false;
     }
 }
